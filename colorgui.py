@@ -1,6 +1,7 @@
 
 from collections import namedtuple
 import tkinter as tk
+from tkinter import messagebox
 
 import colorinterface
 
@@ -49,6 +50,17 @@ class ColorValuesFrame(tk.Frame):
         self.red_input.insert(0, colors[0])
         self.green_input.insert(0, colors[1])
         self.blue_input.insert(0, colors[2])
+        
+    def _convert_color(self, color_str):
+        color = int(color_str)
+        if color < 0 or color > 255:
+            raise ValueError('Color component must be 0-255, inclusive.')
+        return color
+
+    def get_colors(self):
+        return (self._convert_color(self.red_input.get()),
+                self._convert_color(self.green_input.get()),
+                self._convert_color(self.blue_input.get()))
 
 class ColorValuesWidget(tk.Frame):
     def __init__(self, master):
@@ -66,6 +78,15 @@ class ColorValuesWidget(tk.Frame):
         for pos, color_tuple in enumerate(colors_list):
             color_name = colorinterface.PUTTY_COLOR_ORDER[pos]
             self.color_inputs[color_name].set_colors(color_tuple)
+    
+    def get_current_entry(self):
+        '''Create a colors list in the same format as
+        colorinterface.read_session_colors from the currently inputted
+        values.'''
+        colors_list = []
+        for color_name in colorinterface.PUTTY_COLOR_ORDER:
+            colors_list.append(self.color_inputs[color_name].get_colors())
+        return colors_list
 
 class ColorInterface(tk.Frame):
     def __init__(self, master, session_names):
@@ -99,7 +120,31 @@ class ColorInterface(tk.Frame):
         print('load from file')
         
     def apply_to_selected(self):
-        print('apply to selected')
+        try:
+            dialog_title = 'Apply to Selected'
+            colors_from_inputs = self.color_values.get_current_entry()
+            curr_selections = self.config_display.get_selected()
+            if not curr_selections:
+                messagebox.showerror(
+                    title=dialog_title,
+                    message='Please select one or more PuTTY sessions.')
+            else:
+                for selection in curr_selections:
+                    colorinterface.write_session_colors(
+                        selection, colors_from_inputs)
+                messagebox.showinfo(
+                    title=dialog_title,
+                    message=('Applied the current color selection to the '
+                             'selected PuTTY sessions successfully.'))
+        except ValueError:
+            error_lines = [
+                'There are one or more invalid values in the input boxes.',
+                'Please make sure that all inputs are integers in the range',
+                '0 to 255, inclusive.'
+            ]
+            messagebox.showerror(
+                title=dialog_title,
+                message='\n'.join(error_lines))
         
     def save_to_file(self):
         print('save to file')
