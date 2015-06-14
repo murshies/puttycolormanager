@@ -144,6 +144,23 @@ def read_colors_from_INI(ini_name):
     
     return color_list
 
+def write_colors_to_INI(ini_name, colors_list, color_names=False):
+    '''Write the colors in colors_list to the file ini_name. If color_names is
+    set to True, the name given to the the color by PuTTY (i.e. the names in
+    PUTTY_COLOR_ORDER will be used; otherwise, their registry names (e.g.
+    Colour0, Colour1) will be used.'''
+    color_config = configparser.SafeConfigParser()
+    color_config.add_section(COLOR_INI_SECTION_NAME)
+    
+    for pos, color_val in enumerate(colors_list):
+        ini_key = (PUTTY_COLOR_ORDER[pos] if color_names
+                   else 'Colour{0}'.format(pos))
+        color_str = pack_registry_colors(color_val)
+        color_config[COLOR_INI_SECTION_NAME][ini_key] = color_str
+        
+    with open(ini_name, 'w') as config_file:
+        color_config.write(config_file)
+
 def main():
     print(read_colors_from_INI('solarized_dark.ini'))
 

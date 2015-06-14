@@ -109,6 +109,16 @@ class ColorInterface(tk.Frame):
         # Add the display and button frames to the main frame.
         display_frame.pack()
         button_frame.pack()
+        
+    def _invalid_inputs_message(self, dialog_title):
+        error_lines = [
+            'There are one or more invalid values in the input boxes.',
+            'Please make sure that all inputs are integers in the range',
+            '0 to 255, inclusive.'
+        ]
+        messagebox.showerror(
+            title=dialog_title,
+            message='\n'.join(error_lines))
 
     def load_selected(self):
         curr_selections = self.config_display.get_selected()
@@ -120,18 +130,19 @@ class ColorInterface(tk.Frame):
     def load_from_file(self):
         dialog_title = 'Load From File'
         filename = filedialog.askopenfilename()
-        try:
-            colors_list = colorinterface.read_colors_from_INI(filename)
-            self.color_values.load_colors(colors_list)
-        except Exception as e:
-            messagebox.showerror(
-                title=dialog_title,
-                message='Could not load colors from {0}:\n\n{1}'.format(
-                    filename, e))
+        if filename:
+            try:
+                colors_list = colorinterface.read_colors_from_INI(filename)
+                self.color_values.load_colors(colors_list)
+            except Exception as e:
+                messagebox.showerror(
+                    title=dialog_title,
+                    message='Could not load colors from {0}:\n\n{1}'.format(
+                        filename, e))
         
     def apply_to_selected(self):
+        dialog_title = 'Apply to Selected'
         try:
-            dialog_title = 'Apply to Selected'
             colors_from_inputs = self.color_values.get_current_entry()
             curr_selections = self.config_display.get_selected()
             if not curr_selections:
@@ -147,17 +158,25 @@ class ColorInterface(tk.Frame):
                     message=('Applied the current color selection to the '
                              'selected PuTTY sessions successfully.'))
         except ValueError:
-            error_lines = [
-                'There are one or more invalid values in the input boxes.',
-                'Please make sure that all inputs are integers in the range',
-                '0 to 255, inclusive.'
-            ]
-            messagebox.showerror(
-                title=dialog_title,
-                message='\n'.join(error_lines))
+            self._invalid_inputs_message(dialog_title)
         
     def save_to_file(self):
-        print('save to file')
+        dialog_title = 'Save to File'
+        try:
+            colors_from_inputs = self.color_values.get_current_entry()
+            filename = filedialog.asksaveasfilename()
+            if filename:
+                colorinterface.write_colors_to_INI(filename, colors_from_inputs,
+                                                   color_names=True)
+                messagebox.showinfo(
+                    title=dialog_title,
+                    message='Wrote colors to {0} successfully.'.format(filename))
+        except ValueError as e:
+            self._invalid_inputs_message(dialog_title)
+        except Exception as e:
+            messagebox.showerror(
+                title=dialog_title,
+                message='Could not save the colors to file:\n\n{0}'.format(e))
 
 class ButtonFrame(tk.Frame):
     def __init__(self, master):
