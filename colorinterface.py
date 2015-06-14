@@ -57,14 +57,6 @@ WINDOWS_RESERVED = 0
 # The INI section name for color themes read from an INI file.
 COLOR_INI_SECTION_NAME = 'Colors'
 
-def unpack_registry_color(reg_value):
-    '''Given the value of a color read from the registry, return a list of
-    integers of the RGB values. "reg_value" will be a tuple of 2 items,
-    containing the value of the registry item (a string in our case), and an
-    integer representing the item type (1 in our case). The colors in the
-    registry are comma-separated (e.g. 255,255,255).'''
-    return unpack_color(reg_value[0])
-
 def unpack_color(color_val):
     '''Given a color in the form of a comma-separated RGB string, return a
     tuple of integers. Whitspace is allowed between integers.'''
@@ -87,7 +79,8 @@ def read_session_colors(session_name):
         for color_number in range(len(PUTTY_COLOR_ORDER)):
             reg_color_name = 'Colour{0}'.format(color_number)
             reg_value = winreg.QueryValueEx(session, reg_color_name)
-            colors = unpack_registry_color(reg_value)
+            color_from_reg = reg_value[0]
+            colors = unpack_color(color_from_reg)
             colors_list.append(colors)
     
     return colors_list
