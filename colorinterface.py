@@ -51,26 +51,70 @@ PUTTY_DEFAULT_COLORS = (
     (255, 255, 255)  # 21
 )
 PUTTY_REG_COLOR_TYPE = winreg.REG_SZ
-# Used in Windows Registry API calls, where the calls have reserved parameters
-# that are always set to zero.
+# Used in Windows Registry API calls, where the calls have reserved
+# parameters that are always set to zero.
 WINDOWS_RESERVED = 0
 # The INI section name for color themes read from an INI file.
 COLOR_INI_SECTION_NAME = 'Colors'
 
 def unpack_color(color_val):
-    '''Given a color in the form of a comma-separated RGB string, return a
-    tuple of integers. Whitspace is allowed between integers.'''
+    """
+    Get a RGB color tuple from a value packed as a string. The format is
+    the format used by PuTTY in the Windows registry. Whitspace is
+    allowed between integers.
+    
+    Parameters
+    ----------
+    reg_values : string
+        This is the value read from the registry. It is a string in the
+        format red,green,blue.
+    
+    Returns
+    -------
+    tuple
+        a tuple containing the RGB values as integers
+    
+    Raises
+    ------
+    ValueError
+        when the input string a malformed
+    """
     return tuple([int(x.strip()) for x in color_val.split(',')])
 
 def pack_registry_colors(color_list):
-    '''Converts a color in the form of an RGB list of integers into the format
-    expected by PuTTY (a comma-separated list of integers in the form of a
-    string).'''
+    """
+    Converts RGB integer values into the format used by PuTTY to store
+    colors in the Windows registry.
+    
+    Parameters
+    ----------
+    color_list : list or tuple
+        the collection of three integers that make up the RGB values for
+        a color
+    
+    Returns
+    -------
+    string
+        color_list as a string in the format red,green,blue
+    """
     return ','.join([str(x) for x in color_list])
 
 def read_session_colors(session_name):
-    '''Read all of the color values for the PuTTY session with name
-    "session_name".'''
+    """
+    Read all of the color values for the PuTTY session.
+    
+    Parameters
+    ----------
+    session_name : string
+        the name of the PuTTY session
+    
+    Returns
+    -------
+    list
+        a list of tuples. Each tuple is a collection of three integers,
+        which are the RGB values for that color. The colors are ordered
+        as they are in PuTTY (i.e. PUTTY_COLOR_ORDER).
+    """
     full_session_name = BASE_PUTTY_PATH + session_name
     colors_list = []
     
@@ -86,6 +130,23 @@ def read_session_colors(session_name):
     return colors_list
 
 def write_session_colors(session_name, color_list):
+    """
+    Write a color list to the Windows registry for a single PuTTY
+    session.
+    
+    Parameters
+    ----------
+    session_name : string
+        The name of the PuTTY session as it appears in the Windows
+        registry.
+    color_list : list
+        a list of RGB integer tuples
+    
+    See Also
+    --------
+    read_session_colors for more information on the color list format
+    """
+
     '''Given the name of a session "session_name" and a list of RGB integer
     lists, set color_list as the colors for session_name.'''
     full_session_name = BASE_PUTTY_PATH + session_name
@@ -99,7 +160,14 @@ def write_session_colors(session_name, color_list):
                               PUTTY_REG_COLOR_TYPE, packed_color)
 
 def get_all_session_names():
-    '''Get the name of all PuTTY sessions.'''
+    """
+    Get the name of all PuTTY sessions.
+    
+    Returns
+    -------
+    list
+        a list of PuTTY session names, each in the form of a string
+    """
     session_names = []
     
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, BASE_PUTTY_PATH) as base:
@@ -114,8 +182,37 @@ def get_all_session_names():
     return session_names
 
 def read_colors_from_INI(ini_name):
-    '''Given the name of an INI file "ini_name", create a list of RGB tuples
-    containing the colors found in ini_name.'''
+    """
+    Read PuTTY session colors from an INI file.
+    
+    The INI file needs to contain at least one section, called Colors
+    (defined as COLOR_INI_SECTION_NAME). Each color defined by PuTTY
+    needs to be represented in this INI section. The key for a
+    particular color can be their registry names (e.g. Colour0,
+    Colour1) or their names as shown in the PuTTY dialog (e.g.
+    default foreground, default background).
+    
+    Parameters
+    ----------
+    ini_name : string
+        the name of the INI file to read
+    
+    Returns
+    -------
+    list
+        a list of RGB integer tuples
+    
+    Raises
+    ------
+    ValueError
+        when a color isn't represented the INI section
+    KeyError
+        when the color INI section name isn't present in the INI file
+    
+    See Also
+    --------
+    read_session_colors for more information on the color list format
+    """
     color_config = configparser.SafeConfigParser()
     color_config.read(ini_name)
     color_dict = color_config[COLOR_INI_SECTION_NAME]
@@ -138,10 +235,34 @@ def read_colors_from_INI(ini_name):
     return color_list
 
 def write_colors_to_INI(ini_name, colors_list, color_names=False):
-    '''Write the colors in colors_list to the file ini_name. If color_names is
-    set to True, the name given to the the color by PuTTY (i.e. the names in
-    PUTTY_COLOR_ORDER will be used; otherwise, their registry names (e.g.
-    Colour0, Colour1) will be used.'''
+    """
+    Write a color list to a file.
+    
+    Parameters
+    ----------
+    ini_name : string
+        the name of the file to which the color list will be written
+    
+    colors_list : list
+        the list of integer tuples to write to file
+    
+    color_names : boolean, optional
+        If set to True, the name given to the the color by PuTTY (i.e.
+        the names in PUTTY_COLOR_ORDER will be used; otherwise, their
+        registry names (e.g. Colour0, Colour1) will be used.
+    
+    Raises
+    ------
+    IOError
+        when the file is not writable
+    IndexError
+        when there are more integer tuples in the color list than
+        necessary
+    
+    See Also
+    --------
+    read_session_colors for more information on the color list format
+    """
     color_config = configparser.SafeConfigParser()
     color_config.add_section(COLOR_INI_SECTION_NAME)
     
