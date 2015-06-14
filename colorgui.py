@@ -18,6 +18,10 @@ class ConfigDisplayWidget(tk.Frame):
             self.session_list.insert(tk.END, session_display_name)
 
         self.session_list.pack(fill=tk.BOTH, expand=True)
+        
+    def get_selected(self):
+        return [self.session_list.get(x).replace(' ', '%20')
+                for x in self.session_list.curselection()]
 
 class ColorValuesFrame(tk.Frame):
     def __init__(self, master, label_text):
@@ -26,26 +30,42 @@ class ColorValuesFrame(tk.Frame):
         label = tk.Label(self, text=label_text)
         label.pack(side=tk.LEFT, fill=tk.X)
         
-        red_input = tk.Entry(self, width=5)
-        red_input.pack(side=tk.RIGHT, fill=tk.Y)
+        self.red_input = tk.Entry(self, width=5)
+        self.red_input.pack(side=tk.RIGHT, fill=tk.Y)
         
-        green_input = tk.Entry(self, width=5)
-        green_input.pack(side=tk.RIGHT, fill=tk.Y)
+        self.green_input = tk.Entry(self, width=5)
+        self.green_input.pack(side=tk.RIGHT, fill=tk.Y)
         
-        blue_input = tk.Entry(self, width=5)
-        blue_input.pack(side=tk.RIGHT, fill=tk.Y)
+        self.blue_input = tk.Entry(self, width=5)
+        self.blue_input.pack(side=tk.RIGHT, fill=tk.Y)
+
+    def set_colors(self, colors):
+        # Clear the inputs of any text.
+        self.red_input.delete(0, tk.END)
+        self.green_input.delete(0, tk.END)
+        self.blue_input.delete(0, tk.END)
+        
+        # Set the new text.
+        self.red_input.insert(0, colors[0])
+        self.green_input.insert(0, colors[1])
+        self.blue_input.insert(0, colors[2])
 
 class ColorValuesWidget(tk.Frame):
     def __init__(self, master):
         tk.Frame.__init__(self, master)
         self.master = master
-        self.colorInputs = {}
+        self.color_inputs = {}
         
         # Create the column for the inputs.
         for num, color in enumerate(colorinterface.PUTTY_COLOR_ORDER):
             next_input_group = ColorValuesFrame(self, color)
             next_input_group.pack(fill=tk.X)
-            self.colorInputs[color] = next_input_group
+            self.color_inputs[color] = next_input_group
+            
+    def load_colors(self, colors_list):
+        for pos, color_tuple in enumerate(colors_list):
+            color_name = colorinterface.PUTTY_COLOR_ORDER[pos]
+            self.color_inputs[color_name].set_colors(color_tuple)
 
 class ColorInterface(tk.Frame):
     def __init__(self, master, session_names):
@@ -54,12 +74,12 @@ class ColorInterface(tk.Frame):
         
         # Initialize the sub-widgets.
         display_frame = tk.Frame(self)
-        config_display = ConfigDisplayWidget(display_frame, session_names)
-        color_values = ColorValuesWidget(display_frame)
+        self.config_display = ConfigDisplayWidget(display_frame, session_names)
+        self.color_values = ColorValuesWidget(display_frame)
         
         # Place the sub-widgets within the display frame.
-        config_display.pack(side=tk.LEFT, fill=tk.BOTH)
-        color_values.pack(side=tk.RIGHT)
+        self.config_display.pack(side=tk.LEFT, fill=tk.BOTH)
+        self.color_values.pack(side=tk.RIGHT)
         
         # Initialize the button frame.
         button_frame = ButtonFrame(self)
@@ -69,7 +89,11 @@ class ColorInterface(tk.Frame):
         button_frame.pack()
 
     def load_selected(self):
-        print('load selected')
+        curr_selections = self.config_display.get_selected()
+        if curr_selections:
+            used_session = curr_selections[0]
+            session_colors = colorinterface.read_session_colors(used_session)
+            self.color_values.load_colors(session_colors)
         
     def load_from_file(self):
         print('load from file')
@@ -121,7 +145,7 @@ class ButtonFrame(tk.Frame):
 def main():
     '''Initialize the window and enter the Tkinter main loop.'''
     top = tk.Tk()
-    interface = ColorInterface(top, colorinterface.getAllSessionNames())
+    interface = ColorInterface(top, colorinterface.get_all_session_names())
     interface.pack()
     tk.mainloop()
 
