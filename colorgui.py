@@ -134,6 +134,13 @@ class ColorInterface(tk.Frame):
             try:
                 colors_list = colorinterface.read_colors_from_INI(filename)
                 self.color_values.load_colors(colors_list)
+            except KeyError:
+                messagebox.showerror(
+                    title=dialog_title,
+                    message=('Malformed INI file. Please ensure that the file '
+                             'contains the color definitions in a section '
+                             'called "{0}"').format(
+                                 colorinterface.COLOR_INI_SECTION_NAME))
             except Exception as e:
                 messagebox.showerror(
                     title=dialog_title,
