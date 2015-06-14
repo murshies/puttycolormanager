@@ -1,6 +1,7 @@
 
 from collections import namedtuple
 import tkinter as tk
+from tkinter import filedialog
 from tkinter import messagebox
 
 import colorinterface
@@ -117,7 +118,16 @@ class ColorInterface(tk.Frame):
             self.color_values.load_colors(session_colors)
         
     def load_from_file(self):
-        print('load from file')
+        dialog_title = 'Load From File'
+        filename = filedialog.askopenfilename()
+        try:
+            colors_list = colorinterface.read_colors_from_INI(filename)
+            self.color_values.load_colors(colors_list)
+        except Exception as e:
+            messagebox.showerror(
+                title=dialog_title,
+                message='Could not load colors from {0}:\n\n{1}'.format(
+                    filename, e))
         
     def apply_to_selected(self):
         try:

@@ -136,10 +136,10 @@ def read_colors_from_INI(ini_name):
         elif color_name in color_dict:
             curr_color = unpack_color(color_dict[color_name])
         else:
-            logging.warning(('No value for {0} ({1}) found in {2} - using the '
-                             'default value {3}').format(
-                                reg_color_name, color_name, ini_name,
-                                curr_color))
+            raise ValueError(('No value for {0} ({1}) found in {2} - using '
+                              'the default value {3}').format(
+                                  reg_color_name, color_name, ini_name,
+                                  curr_color))
         color_list.append(curr_color)
     
     return color_list
