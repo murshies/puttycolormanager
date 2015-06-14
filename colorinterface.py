@@ -3,6 +3,13 @@ import configparser
 import logging
 import winreg
 
+"""
+colorinterface.py
+
+This file acts as an interface for reading, writing, and manipulating
+the colors for PuTTY sessions held in the Windows registry.
+"""
+
 BASE_PUTTY_PATH = 'Software\\SimonTatham\\PuTTY\\Sessions\\'
 PUTTY_COLOR_ORDER = ['Default Foreground',
                      'Default Bold Foreground',
