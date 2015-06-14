@@ -92,7 +92,7 @@ def read_session_colors(session_name):
     
     return colors_list
 
-def writeSessionColors(session_name, color_list):
+def write_session_colors(session_name, color_list):
     '''Given the name of a session "session_name" and a list of RGB integer
     lists, set color_list as the colors for session_name.'''
     full_session_name = BASE_PUTTY_PATH + session_name
