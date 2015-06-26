@@ -447,6 +447,7 @@ class ButtonFrame(tk.Frame):
 def main():
     """Initialize the window and enter the Tkinter main loop."""
     top = tk.Tk()
+    top.wm_title('PuTTY Color Manager')
     interface = ColorInterface(top, colorinterface.get_all_session_names())
     interface.pack()
     tk.mainloop()
